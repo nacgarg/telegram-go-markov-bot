@@ -1,75 +1,121 @@
-package main 
+package main
 
 import (
-    "log"
-    "github.com/go-telegram-bot-api/telegram-bot-api"
-    "flag"
-    "strings"
-    "fmt"
+	"flag"
+	"log"
+
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-var dataDict = make(map[string]map[string]int)
-var filePath string
+type DataMapType map[string]map[string]int
+
+var DataDict = make(DataMapType)
 
 func main() {
+	// Flags
+	var botToken string
+	var importPath string
+	var devMode bool
+	var datasetPath string
+
 	// Read flags
 
-	flag.StringVar(&filePath, "file", "data.mrkv", "Path to markov dataset file")
-
-	var botToken string
+	flag.StringVar(&datasetPath, "file", "data.mrkv", "Path to markov dataset file")
 	flag.StringVar(&botToken, "token", "", "Telegram token for bot")
-
-	var importFile string
-	flag.StringVar(&importFile, "import", "", "Import raw text logs")
+	flag.StringVar(&importPath, "import", "", "Import raw text logs")
+	flag.BoolVar(&devMode, "dev", false, "If enabled, bot debug mode is true")
 
 	flag.Parse()
 
+	if botToken == "" {
+		log.Panic("Missing Bot Token")
+	}
 
-	load_dataset(filePath)
+	ds, err := loadDataset(datasetPath)
+	if err != nil {
+		log.Panic(err)
+		return
+	}
+	DataDict = ds
 
-	if importFile != "" {
-		import_file(importFile)
+	if importPath != "" {
+		importFile(importPath)
 	}
 
 	// Init bot
+	go log.Panic(runBot(botToken, devMode))
 
+	// Shutdown Handler
+	var done = make(chan bool, 1)
 
-    bot, err := tgbotapi.NewBotAPI(botToken)
-    if err != nil {
-        log.Panic(err)
-    }
+	sigs := make(chan os.Signal, 1)
 
-    bot.Debug = true
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-    log.Printf("Authorized on account %s", bot.Self.UserName)
+	go func() {
+		<-sigs
 
-    u := tgbotapi.NewUpdate(0)
-    u.Timeout = 60
+		err := saveDataset(datasetPath)
+		if err != nil {
+			log.Println("Error saving dataset:", err)
+		}
 
-    updates, err := bot.GetUpdatesChan(u)
-
-    for update := range updates {
-        if update.Message == nil || update.Message.Text == "" {
-            continue
-        }
-        if strings.Fields(update.Message.Text)[0] == "/test" {
-        	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "yo")
-       		msg.ReplyToMessageID = update.Message.MessageID
-       		bot.Send(msg)
-        }
-
-         if strings.Fields(update.Message.Text)[0] == "/markov" {
-         	fmt.Println(update.Message.Text[8:])
-        	msg := tgbotapi.NewMessage(update.Message.Chat.ID, generate_response(update.Message.Text[8:]))
-       		msg.ReplyToMessageID = update.Message.MessageID
-       		bot.Send(msg)
-        }
-
-        train(update.Message.Text)
-
-        log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-
-    }
+		done <- true
+	}()
+	<-done
 }
 
+func runBot(token string, mode bool) error {
+	bot, err := tgbotapi.NewBotAPI(token)
+	if err != nil {
+		return err
+	}
+
+	bot.Debug = mode
+
+	log.Printf("Authorized on account %s", bot.Self.UserName)
+
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
+
+	updates, err := bot.GetUpdatesChan(u)
+	if err != nil {
+		return err
+	}
+
+	for update := range updates {
+		if update.Message == nil || update.Message.Text == "" {
+			continue
+		}
+
+		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+
+		if update.Message.IsCommand() {
+			go handleCommand(bot, update)
+		}
+
+		go trainMessage(update.Message.Text)
+	}
+	return nil
+}
+
+func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
+	if update.Message.Command() == "test" {
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "yo")
+		msg.ReplyToMessageID = update.Message.MessageID
+		bot.Send(msg)
+		return
+	}
+
+	if update.Message.Command() == "markov" {
+		log.Println(update.Message.CommandArguments())
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, generateMarkovResponse(update.Message.CommandArguments()))
+		msg.ReplyToMessageID = update.Message.MessageID
+		bot.Send(msg)
+		return
+	}
+}

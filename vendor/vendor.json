@@ -1,0 +1,19 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "JwUX0e2E9EXlWuYeyG9gsjxiG3o=",
+			"path": "github.com/go-telegram-bot-api/telegram-bot-api",
+			"revision": "a7f48eb2dd301356942677e65bebe0c9aef07013",
+			"revisionTime": "2016-08-01T18:36:25Z"
+		},
+		{
+			"checksumSHA1": "t8jzPFIv4DNACv+cuZoigNmjPLQ=",
+			"path": "github.com/technoweenie/multipartstreamer",
+			"revision": "a90a01d73ae432e2611d178c18367fbaa13e0154",
+			"revisionTime": "2013-10-20T00:18:33Z"
+		}
+	],
+	"rootPath": "github.com/nacgarg/telegram-go-markov-bot"
+}

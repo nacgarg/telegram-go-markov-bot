@@ -1,31 +1,31 @@
 package main
 
 import (
-	"os"
 	"encoding/gob"
-	"strings"
-	"fmt"
 	"math/rand"
+	"os"
+	"strings"
 	"time"
 )
 
 var END = "@END@"
 
-func generate_response(input_text string) string {
-	seed := strings.Fields(preprocess_text(input_text))[0]
+func generateMarkovResponse(inputText string) string {
+	seed := strings.Fields(preprocessText(inputText))[0]
 
-	if _, ok := dataDict[seed]; !ok { // If key is not in dataDict
+	if _, ok := DataDict[seed]; !ok { // If key is not in DataDict
 		return "idk how to understand"
 	}
 	var currWord string
 	var sentence string
 	current := 0
 	currWord = seed
-	for true {
+	for {
 		total := 0
 
 		keys := []string{}
-		for k, v := range dataDict[currWord] {
+		cw := DataDict[currWord]
+		for k, v := range cw {
 			total += v
 			keys = append(keys, k)
 		}
@@ -34,74 +34,81 @@ func generate_response(input_text string) string {
 		threshold := rand.Intn(total)
 
 		for i := 1; i < total; i++ {
-			if (current > threshold) {
-				if keys[i - 1] != END {
-					currWord = keys[i - 1]
+			if current > threshold {
+				if keys[i-1] != END {
+					currWord = keys[i-1]
 					sentence += " " + currWord
 				} else {
-					return sentence;
+					return sentence
 				}
 			}
 
-	        current += dataDict[currWord][keys[i]]
+			current += DataDict[currWord][keys[i]]
 		}
 	}
 
 	return sentence
 }
 
-func train(train_text string) {
-	words := strings.Fields(preprocess_text(train_text)) // Split by whitespace to get individual words
+func trainMessage(msg string) {
+	words := strings.Fields(preprocessText(msg)) // Split by whitespace to get individual words
 	for i, word := range words {
-		if _, ok := dataDict[word]; !ok { // If key is not in dataDict
-			dataDict[word] = make(map[string]int)
+		if _, ok := DataDict[word]; !ok { // If key is not in DataDict
+			DataDict[word] = make(map[string]int)
 		}
-		if (i+1 == len(words)) {
-			dataDict[word][END] += 1
+		if i == len(words)-1 {
+			DataDict[word][END] += 1
 		} else {
-			dataDict[word][words[i + 1]] += 1
+			DataDict[word][words[i+1]] += 1
 		}
-		// dataDict[word][words[i + 1]] 
-	}
-
-	save_dataset()
-}
-
-func load_dataset(fp string) {
-	if _, err := os.Stat(fp); os.IsNotExist(err) {
-		// If fp doesn't exist, create an empty file there and leave dataDict empty
-		dataFile, _ := os.Create(fp)
-		dataEncoder := gob.NewEncoder(dataFile)
-	 	dataEncoder.Encode(dataDict)
-		dataFile.Close()
-
-	} else {
-		dataFile, _ := os.Open(fp)
-		dataDecoder := gob.NewDecoder(dataFile)
- 		_ = dataDecoder.Decode(&dataDict)
- 		dataFile.Close()
- 		fmt.Println(dataDict)
+		// DataDict[word][words[i + 1]]
 	}
 }
 
-func save_dataset() {
-	dataFile, _ := os.OpenFile(filePath, os.O_WRONLY, os.ModeAppend)
+func loadDataset(path string) (DataMapType, error) {
+	res := make(DataMapType)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return res, nil
+
+	}
+
+	dataFile, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer dataFile.Close()
+
+	dataDecoder := gob.NewDecoder(dataFile)
+
+	err = dataDecoder.Decode(&res)
+	return res, err
+}
+
+func saveDataset(path string) error {
+	dataFile, err := os.OpenFile(path, os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
+	defer dataFile.Close()
+
 	dataEncoder := gob.NewEncoder(dataFile)
-	dataEncoder.Encode(dataDict)
-	dataFile.Close()
+	err = dataEncoder.Encode(DataDict)
+	if err != nil {
+		return err
+	}
 
-	fmt.Println("Saved dataset")
+	return nil
 }
 
-func import_file(fp string) {
+func importFile(fp string) {
 	// TODO
 }
 
-func preprocess_text(text string) string {
+func preprocessText(text string) string {
 	// TODO: Add more here to clean up punctuation, etc.
-	return strings.ToLower(text) 
+	return strings.ToLower(text)
 }
 
-func postprocess_text(text string) string {
+func postprocessText(text string) string {
 	return text
 }
