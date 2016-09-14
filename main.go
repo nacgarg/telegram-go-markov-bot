@@ -4,14 +4,16 @@ import (
     "log"
     "github.com/go-telegram-bot-api/telegram-bot-api"
     "flag"
-    // "io"
+    "strings"
+    "fmt"
 )
 
-var dataDict = make(map[string][]string)
+var dataDict = make(map[string]map[string]int)
+var filePath string
 
 func main() {
 	// Read flags
-	var filePath string
+
 	flag.StringVar(&filePath, "file", "data.mrkv", "Path to markov dataset file")
 
 	var botToken string
@@ -50,14 +52,24 @@ func main() {
         if update.Message == nil || update.Message.Text == "" {
             continue
         }
+        if strings.Fields(update.Message.Text)[0] == "/test" {
+        	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "yo")
+       		msg.ReplyToMessageID = update.Message.MessageID
+       		bot.Send(msg)
+        }
 
+         if strings.Fields(update.Message.Text)[0] == "/markov" {
+         	fmt.Println(update.Message.Text[8:])
+        	msg := tgbotapi.NewMessage(update.Message.Chat.ID, generate_response(update.Message.Text[8:]))
+       		msg.ReplyToMessageID = update.Message.MessageID
+       		bot.Send(msg)
+        }
+
+        train(update.Message.Text)
 
         log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
-        msg := tgbotapi.NewMessage(update.Message.Chat.ID, generate_response(update.Message.Text))
-        msg.ReplyToMessageID = update.Message.MessageID
 
-        bot.Send(msg)
     }
 }
 
