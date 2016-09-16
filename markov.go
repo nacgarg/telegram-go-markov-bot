@@ -21,7 +21,7 @@ var (
 		":": true,
 		"&": true,
 	}
-	SplitRegex *regexp.Regexp
+	SplitRegex = regexp.MustCompile(`([\w'-]+|[.,!?;&])`)
 )
 
 func generateMarkovResponse(inputText string) string {
