@@ -77,7 +77,7 @@ func generateMarkovResponse(inputText string) string {
 
 func trainMessage(msg string) {
 	items := processText(preprocessText(msg)) // Split by whitespace to get individual words
-	previousItems := START
+	previousItems := [2]string{START_1,START_2}
 	if len(items) < 1 {
 		return
 	}
