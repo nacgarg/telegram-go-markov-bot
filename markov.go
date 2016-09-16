@@ -63,6 +63,8 @@ func generateMarkovResponse(inputText string) string {
 		} else {
 			response = response + " " + nextItem
 		}
+		previousItems[0] = previousItems[1]
+		previousItems[1] = nextItem
 		counter++
 	}
 }
