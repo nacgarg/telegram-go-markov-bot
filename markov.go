@@ -21,7 +21,8 @@ var (
 		":": true,
 		"&": true,
 	}
-	SplitRegex = regexp.MustCompile(`([\w'-]+|[.,!?;&])`)
+	SplitRegex    = regexp.MustCompile(`([\w'-]+|[.,!?;&])`)
+	MaxMessageLen = 75
 )
 
 func generateMarkovResponse(inputText string) string {
@@ -44,7 +45,8 @@ func generateMarkovResponse(inputText string) string {
 	if _, ok := DataDict.Map[previousItems]; !ok {
 		return "Error! I don't understand that =("
 	}
-	for {
+	i := 0
+	for i < MaxMessageLen {
 		options, ok := DataDict.Map[previousItems]
 		if !ok {
 			return response
@@ -58,7 +60,11 @@ func generateMarkovResponse(inputText string) string {
 		} else {
 			response = response + " " + nextItem
 		}
+		previousItems[0] = previousItems[1]
+		previousItems[1] = nextItem
+		i++
 	}
+	return response
 }
 
 func trainMessage(msg string) {
