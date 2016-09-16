@@ -66,6 +66,9 @@ func trainMessage(msg string) {
 		return
 	}
 	for _, item := range items {
+		if _, ok := DataDict[previousItems]; !ok {
+			DataDict[previousItems] = []string{}
+		}
 		DataDict[previousItems] = append(DataDict[previousItems], item)
 		previousItems[0] = previousItems[1]
 		previousItems[1] = item
