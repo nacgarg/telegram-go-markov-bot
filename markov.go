@@ -61,7 +61,6 @@ func generateMarkovResponse(inputText string) string {
 		}
 		previousItems[0] = previousItems[1]
 		previousItems[1] = nextItem
-		i++
 	}
 	return response
 }
