@@ -2,11 +2,12 @@ package main
 
 import (
 	"encoding/gob"
-	"log"
 	"math/rand"
 	"os"
 	"regexp"
 	"strings"
+	"bytes"
+	"io/ioutil"
 )
 
 var (
@@ -88,37 +89,34 @@ func loadDataset(path string) (DataMapType, error) {
 	res := make(DataMapType)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return res, nil
-
 	}
 
-	dataFile, err := os.Open(path)
+	fileBytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	defer log.Println(dataFile.Close())
 
-	dataDecoder := gob.NewDecoder(dataFile)
+	reader := bytes.NewReader(fileBytes)
+
+	dataDecoder := gob.NewDecoder(reader)
 
 	err = dataDecoder.Decode(&res)
 	return res, err
 }
 
 func saveDataset(path string) error {
-	dataFile, err := os.OpenFile(path, os.O_RDWR, 0644)
-	if err != nil {
-		return err
-	}
-	defer log.Println(dataFile.Close())
+	b := new(bytes.Buffer)
 
-	dataEncoder := gob.NewEncoder(dataFile)
+	dataEncoder := gob.NewEncoder(b)
+
 	DataDict.RLock()
-	defer DataDict.RUnlock()
-	err = dataEncoder.Encode(DataDict.Map)
+	err := dataEncoder.Encode(DataDict.Map)
+	DataDict.RUnlock()
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return ioutil.WriteFile(path, b.Bytes(), 0644)
 }
 
 func importFile(fp string) {

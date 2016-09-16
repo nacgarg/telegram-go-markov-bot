@@ -9,9 +9,9 @@ import (
 
 	"os"
 	"os/signal"
-	"syscall"
 
 	"github.com/go-telegram-bot-api/telegram-bot-api"
+	"syscall"
 )
 
 type DataMapType map[[2]string][]string
@@ -57,27 +57,29 @@ func main() {
 		importFile(importPath)
 	}
 
+
 	// Init bot
-	go log.Panic(runBot(botToken, devMode))
+	go runBot(botToken, devMode)
 
 	// Shutdown Handler
-	var done = make(chan bool, 1)
-
 	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
 
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		<-sigs
-
+		log.Println("Starting Safe Quit")
 		err := saveDataset(datasetPath)
 		if err != nil {
 			log.Println("Error saving dataset:", err)
 		}
-
 		done <- true
 	}()
+
 	<-done
+	log.Println("Ended Safe Quit")
+
 }
 
 func runBot(token string, mode bool) error {
