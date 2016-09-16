@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"os"
@@ -11,7 +12,7 @@ import (
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-type DataMapType map[string]map[string]int
+type DataMapType map[[2]string][]string
 
 var DataDict = make(DataMapType)
 
@@ -107,7 +108,10 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	if update.Message.Command() == "test" {
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "yo")
 		msg.ReplyToMessageID = update.Message.MessageID
-		bot.Send(msg)
+		_, sendErr := bot.Send(msg)
+		if sendErr != nil {
+			fmt.Println(sendErr)
+		}
 		return
 	}
 
@@ -115,7 +119,10 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		log.Println(update.Message.CommandArguments())
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, generateMarkovResponse(update.Message.CommandArguments()))
 		msg.ReplyToMessageID = update.Message.MessageID
-		bot.Send(msg)
+		_, sendErr := bot.Send(msg)
+		if sendErr != nil {
+			fmt.Println(sendErr)
+		}
 		return
 	}
 }
