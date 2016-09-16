@@ -10,9 +10,13 @@ import (
 	"io/ioutil"
 )
 
+const (
+	END     = "@END@"
+	START_1 = "@START 1@"
+	START_2 = "@START 2@"
+)
+
 var (
-	END         = "@END@"
-	START       = [2]string{"@START 1@", "@START 2@"}
 	punctuation = map[string]bool{
 		".": true,
 		",": true,
@@ -35,11 +39,12 @@ func generateMarkovResponse(inputText string) string {
 		previousItems[1] = seed[1]
 		response = seed[0] + " " + seed[1]
 	} else if len(seed) == 1 {
-		previousItems[0] = START[1]
+		previousItems[0] = START_2
 		previousItems[1] = seed[0]
 		response = seed[0]
 	} else {
-		previousItems = START
+		previousItems[0] = START_1
+		previousItems[1] = START_2
 	}
 	originalResponse := response
 	DataDict.RLock()
