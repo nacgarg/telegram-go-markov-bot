@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
+	"regexp"
 
 	"os"
 	"os/signal"
@@ -31,6 +31,8 @@ func main() {
 	flag.BoolVar(&devMode, "dev", false, "If enabled, bot debug mode is true")
 
 	flag.Parse()
+
+	SplitRegex = regexp.MustCompile(`([\w'-]+|[.,!?;&])`)
 
 	if botToken == "" {
 		log.Panic("Missing Bot Token")
@@ -110,7 +112,7 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		msg.ReplyToMessageID = update.Message.MessageID
 		_, sendErr := bot.Send(msg)
 		if sendErr != nil {
-			fmt.Println(sendErr)
+			log.Println(sendErr)
 		}
 		return
 	}
@@ -121,7 +123,7 @@ func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 		msg.ReplyToMessageID = update.Message.MessageID
 		_, sendErr := bot.Send(msg)
 		if sendErr != nil {
-			fmt.Println(sendErr)
+			log.Println(sendErr)
 		}
 		return
 	}

@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/gob"
-	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"regexp"
@@ -22,6 +22,7 @@ var (
 		":": true,
 		"&": true,
 	}
+	SplitRegex *regexp.Regexp
 )
 
 func generateMarkovResponse(inputText string) string {
@@ -85,7 +86,7 @@ func loadDataset(path string) (DataMapType, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer fmt.Println(dataFile.Close())
+	defer log.Println(dataFile.Close())
 
 	dataDecoder := gob.NewDecoder(dataFile)
 
@@ -98,7 +99,7 @@ func saveDataset(path string) error {
 	if err != nil {
 		return err
 	}
-	defer fmt.Println(dataFile.Close())
+	defer log.Println(dataFile.Close())
 
 	dataEncoder := gob.NewEncoder(dataFile)
 	err = dataEncoder.Encode(DataDict)
@@ -119,8 +120,7 @@ func preprocessText(text string) string {
 }
 
 func processText(text string) []string {
-	validRegex := regexp.MustCompile(`([\w'-]+|[.,!?;&])`)
-	return validRegex.FindAllString(text, -1)
+	return SplitRegex.FindAllString(text, -1)
 }
 
 func postprocessText(text string) string {
