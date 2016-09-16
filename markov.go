@@ -45,11 +45,8 @@ func generateMarkovResponse(inputText string) string {
 	if _, ok := DataDict.Map[previousItems]; !ok {
 		return "Error! I don't understand that =("
 	}
-	counter := 0
-	for {
-		if counter == MaxMessageLen {
-			return response
-		}
+	i := 0
+	for i < MaxMessageLen {
 		options, ok := DataDict.Map[previousItems]
 		if !ok {
 			return response
@@ -65,8 +62,9 @@ func generateMarkovResponse(inputText string) string {
 		}
 		previousItems[0] = previousItems[1]
 		previousItems[1] = nextItem
-		counter++
+		i++
 	}
+	return response
 }
 
 func trainMessage(msg string) {
