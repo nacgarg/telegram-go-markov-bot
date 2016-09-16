@@ -41,6 +41,7 @@ func generateMarkovResponse(inputText string) string {
 	} else {
 		previousItems = START
 	}
+	originalResponse := response
 	DataDict.RLock()
 	defer DataDict.RUnlock()
 	if _, ok := DataDict.Map[previousItems]; !ok {
@@ -53,6 +54,9 @@ func generateMarkovResponse(inputText string) string {
 		}
 		nextItem := options[rand.Intn(len(options))]
 		if nextItem == END {
+			if response == originalResponse { // Don't end immediately, try and generate at least one extra word on top of the seed
+				continue
+			}
 			break
 		}
 		if _, isPunctuation := punctuation[nextItem]; isPunctuation {
