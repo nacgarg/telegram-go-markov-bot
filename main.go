@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"log"
+	"math/rand"
 	"regexp"
+	"time"
 
 	"os"
 	"os/signal"
@@ -33,6 +35,7 @@ func main() {
 	flag.Parse()
 
 	SplitRegex = regexp.MustCompile(`([\w'-]+|[.,!?;&])`)
+	rand.Seed(time.Now().Unix())
 
 	if botToken == "" {
 		log.Panic("Missing Bot Token")
