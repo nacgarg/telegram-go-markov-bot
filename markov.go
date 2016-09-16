@@ -45,15 +45,14 @@ func generateMarkovResponse(inputText string) string {
 	if _, ok := DataDict.Map[previousItems]; !ok {
 		return "Error! I don't understand that =("
 	}
-	i := 0
-	for i < MaxMessageLen {
+	for i := 0; i < MaxMessageLen; i++ {
 		options, ok := DataDict.Map[previousItems]
 		if !ok {
-			return response
+			break
 		}
 		nextItem := options[rand.Intn(len(options))]
 		if nextItem == END {
-			return response
+			break
 		}
 		if _, isPunctuation := punctuation[nextItem]; isPunctuation {
 			response = response + nextItem
