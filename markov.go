@@ -22,7 +22,7 @@ var (
 		"&": true,
 	}
 	SplitRegex    = regexp.MustCompile(`([\w'-]+|[.,!?;&])`)
-	MaxMessageLen = 75
+	MaxMessageLen int
 )
 
 func generateMarkovResponse(inputText string) string {

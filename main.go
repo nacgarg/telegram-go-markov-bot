@@ -36,6 +36,7 @@ func main() {
 	flag.StringVar(&botToken, "token", "", "Telegram token for bot")
 	flag.StringVar(&importPath, "import", "", "Import raw text logs")
 	flag.BoolVar(&devMode, "dev", false, "If enabled, bot debug mode is true")
+	flag.Int(&MaxMessageLen, "maxlen", 100, "The max length of the generated messages")
 
 	flag.Parse()
 
