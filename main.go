@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"math/rand"
+	"sync"
 	"time"
 
 	"os"
@@ -15,7 +16,12 @@ import (
 
 type DataMapType map[[2]string][]string
 
-var DataDict = make(DataMapType)
+type DataMap struct {
+	sync.RWMutex
+	Map DataMapType
+}
+
+var DataDict = DataMap{Map: make(DataMapType)}
 
 func main() {
 	// Flags
@@ -44,7 +50,7 @@ func main() {
 		log.Panic(err)
 		return
 	}
-	DataDict = ds
+	DataDict.Map = ds
 
 	if importPath != "" {
 		importFile(importPath)

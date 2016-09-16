@@ -39,11 +39,13 @@ func generateMarkovResponse(inputText string) string {
 	} else {
 		previousItems = START
 	}
-	if _, ok := DataDict[previousItems]; !ok {
+	DataDict.RLock()
+	defer DataDict.RUnlock()
+	if _, ok := DataDict.Map[previousItems]; !ok {
 		return "Error! I don't understand that =("
 	}
 	for {
-		options, ok := DataDict[previousItems]
+		options, ok := DataDict.Map[previousItems]
 		if !ok {
 			return response
 		}
@@ -65,15 +67,17 @@ func trainMessage(msg string) {
 	if len(items) < 1 {
 		return
 	}
+	DataDict.Lock()
+	defer DataDict.Unlock()
 	for _, item := range items {
-		if _, ok := DataDict[previousItems]; !ok {
-			DataDict[previousItems] = []string{}
+		if _, ok := DataDict.Map[previousItems]; !ok {
+			DataDict.Map[previousItems] = []string{}
 		}
-		DataDict[previousItems] = append(DataDict[previousItems], item)
+		DataDict.Map[previousItems] = append(DataDict.Map[previousItems], item)
 		previousItems[0] = previousItems[1]
 		previousItems[1] = item
 	}
-	DataDict[previousItems] = append(DataDict[previousItems], END)
+	DataDict.Map[previousItems] = append(DataDict.Map[previousItems], END)
 }
 
 func loadDataset(path string) (DataMapType, error) {
@@ -103,7 +107,9 @@ func saveDataset(path string) error {
 	defer log.Println(dataFile.Close())
 
 	dataEncoder := gob.NewEncoder(dataFile)
-	err = dataEncoder.Encode(DataDict)
+	DataDict.RLock()
+	defer DataDict.RUnlock()
+	err = dataEncoder.Encode(DataDict.Map)
 	if err != nil {
 		return err
 	}
