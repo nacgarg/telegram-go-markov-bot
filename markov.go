@@ -2,67 +2,75 @@ package main
 
 import (
 	"encoding/gob"
+	"log"
 	"math/rand"
 	"os"
+	"regexp"
 	"strings"
-	"time"
 )
 
-var END = "@END@"
+var (
+	END         = "@END@"
+	START       = [2]string{"@START 1@", "@START 2@"}
+	punctuation = map[string]bool{
+		".": true,
+		",": true,
+		"!": true,
+		"?": true,
+		";": true,
+		":": true,
+		"&": true,
+	}
+	SplitRegex = regexp.MustCompile(`([\w'-]+|[.,!?;&])`)
+)
 
 func generateMarkovResponse(inputText string) string {
-	seed := strings.Fields(preprocessText(inputText))[0]
-
-	if _, ok := DataDict[seed]; !ok { // If key is not in DataDict
-		return "idk how to understand"
+	seed := processText(preprocessText(inputText))
+	previousItems := [2]string{}
+	var response string
+	if len(seed) > 1 {
+		previousItems[0] = seed[0]
+		previousItems[1] = seed[1]
+		response = seed[0] + " " + seed[1]
+	} else if len(seed) == 1 {
+		previousItems[0] = START[1]
+		previousItems[1] = seed[0]
+		response = seed[0]
+	} else {
+		previousItems = START
 	}
-	var currWord string
-	var sentence string
-	current := 0
-	currWord = seed
+	if _, ok := DataDict[previousItems]; !ok {
+		return "Error! I don't understand that =("
+	}
 	for {
-		total := 0
-
-		keys := []string{}
-		cw := DataDict[currWord]
-		for k, v := range cw {
-			total += v
-			keys = append(keys, k)
+		options, ok := DataDict[previousItems]
+		if !ok {
+			return response
 		}
-
-		rand.Seed(time.Now().Unix())
-		threshold := rand.Intn(total)
-
-		for i := 1; i < total; i++ {
-			if current > threshold {
-				if keys[i-1] != END {
-					currWord = keys[i-1]
-					sentence += " " + currWord
-				} else {
-					return sentence
-				}
-			}
-
-			current += DataDict[currWord][keys[i]]
+		nextItem := options[rand.Intn(len(options))]
+		if nextItem == END {
+			return response
+		}
+		if _, isPunctuation := punctuation[nextItem]; isPunctuation {
+			response = response + nextItem
+		} else {
+			response = response + " " + nextItem
 		}
 	}
-
-	return sentence
 }
 
 func trainMessage(msg string) {
-	words := strings.Fields(preprocessText(msg)) // Split by whitespace to get individual words
-	for i, word := range words {
-		if _, ok := DataDict[word]; !ok { // If key is not in DataDict
-			DataDict[word] = make(map[string]int)
-		}
-		if i == len(words)-1 {
-			DataDict[word][END] += 1
-		} else {
-			DataDict[word][words[i+1]] += 1
-		}
-		// DataDict[word][words[i + 1]]
+	items := processText(preprocessText(msg)) // Split by whitespace to get individual words
+	previousItems := START
+	if len(items) < 1 {
+		return
 	}
+	for _, item := range items {
+		DataDict[previousItems] = append(DataDict[previousItems], item)
+		previousItems[0] = previousItems[1]
+		previousItems[1] = item
+	}
+	DataDict[previousItems] = append(DataDict[previousItems], END)
 }
 
 func loadDataset(path string) (DataMapType, error) {
@@ -76,7 +84,7 @@ func loadDataset(path string) (DataMapType, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer dataFile.Close()
+	defer log.Println(dataFile.Close())
 
 	dataDecoder := gob.NewDecoder(dataFile)
 
@@ -89,7 +97,7 @@ func saveDataset(path string) error {
 	if err != nil {
 		return err
 	}
-	defer dataFile.Close()
+	defer log.Println(dataFile.Close())
 
 	dataEncoder := gob.NewEncoder(dataFile)
 	err = dataEncoder.Encode(DataDict)
@@ -107,6 +115,10 @@ func importFile(fp string) {
 func preprocessText(text string) string {
 	// TODO: Add more here to clean up punctuation, etc.
 	return strings.ToLower(text)
+}
+
+func processText(text string) []string {
+	return SplitRegex.FindAllString(text, -1)
 }
 
 func postprocessText(text string) string {
