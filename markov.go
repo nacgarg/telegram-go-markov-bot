@@ -42,6 +42,7 @@ func generateMarkovResponse(inputText string) string {
 	if _, ok := DataDict[previousItems]; !ok {
 		return "Error! I don't understand that =("
 	}
+	rand.Seed(time.Now().Unix())
 	for {
 		options, ok := DataDict[previousItems]
 		if !ok {
