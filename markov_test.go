@@ -5,11 +5,12 @@ import (
 )
 
 func TestImportFileNewline(t *testing.T) {
-	ImportFile([]byte(`Hello\\nWorld`))
+	ImportFile([]byte(`Hello\nWorld`))
 	DataDict.RLock()
 
 	val, ok := DataDict.Map[[2]string{"hello", "\n"}]
 	DataDict.RUnlock()
+	
 	if !ok {
 		t.Fatal("Map missing newline with hello as prefix")
 	}
