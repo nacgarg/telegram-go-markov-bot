@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	END     = "@END@"
-	START_1 = "@START 1@"
-	START_2 = "@START 2@"
+	End     = "@End@"
+	Start1 = "@START 1@"
+	Start2 = "@START 2@"
 )
 
 var (
@@ -39,12 +39,12 @@ func generateMarkovResponse(inputText string) string {
 		previousItems[1] = seed[1]
 		response = seed[0] + " " + seed[1]
 	} else if len(seed) == 1 {
-		previousItems[0] = START_2
+		previousItems[0] = Start2
 		previousItems[1] = seed[0]
 		response = seed[0]
 	} else {
-		previousItems[0] = START_1
-		previousItems[1] = START_2
+		previousItems[0] = Start1
+		previousItems[1] = Start2
 	}
 	originalResponse := response
 	DataDict.RLock()
@@ -58,8 +58,8 @@ func generateMarkovResponse(inputText string) string {
 			break
 		}
 		nextItem := options[rand.Intn(len(options))]
-		if nextItem == END {
-			if response == originalResponse { // Don't end immediately, try and generate at least one extra word on top of the seed
+		if nextItem == End {
+			if response == originalResponse { // Don't End immediately, try and generate at least one extra word on top of the seed
 				continue
 			}
 			break
@@ -77,7 +77,7 @@ func generateMarkovResponse(inputText string) string {
 
 func trainMessage(msg string) {
 	items := processText(preprocessText(msg)) // Split by whitespace to get individual words
-	previousItems := [2]string{START_1,START_2}
+	previousItems := [2]string{Start1,Start2}
 	if len(items) < 1 {
 		return
 	}
@@ -91,7 +91,7 @@ func trainMessage(msg string) {
 		previousItems[0] = previousItems[1]
 		previousItems[1] = item
 	}
-	DataDict.Map[previousItems] = append(DataDict.Map[previousItems], END)
+	DataDict.Map[previousItems] = append(DataDict.Map[previousItems], End)
 }
 
 func loadDataset(path string) (DataMapType, error) {
