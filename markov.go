@@ -134,7 +134,7 @@ func ImportFile(fileBytes []byte) {
 
 	for _, msg := range msgSplt {
 		msgStr := string(msg)
-		msgStr = strings.Replace(msgStr, `\\n`, "\n", -1)
+		msgStr = strings.Replace(msgStr, `\n`, "\n", -1)
 		trainMessage(msgStr)
 	}
 }
