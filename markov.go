@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	End     = "@End@"
-	Start1 = "@START 1@"
-	Start2 = "@START 2@"
+	End     = "@END@"
+	Start1 = "@START_1@"
+	Start2 = "@START_2@"
 )
 
 var (
@@ -32,21 +32,21 @@ var (
 
 func generateMarkovResponse(inputText string) string {
 	seed := processText(preprocessText(inputText))
-	previousItems := [2]string{}
-	var response string
+	previousItems := [2]string{Start1, Start2}
+	var resp []string
+
 	if len(seed) > 1 {
 		previousItems[0] = seed[0]
 		previousItems[1] = seed[1]
-		response = seed[0] + " " + seed[1]
+		resp = append(resp, seed[0], seed[1])
 	} else if len(seed) == 1 {
 		previousItems[0] = Start2
 		previousItems[1] = seed[0]
-		response = seed[0]
-	} else {
-		previousItems[0] = Start1
-		previousItems[1] = Start2
+		resp = append(resp, seed[0])
 	}
-	originalResponse := response
+
+	originalRespLen := len(resp)
+
 	DataDict.RLock()
 	defer DataDict.RUnlock()
 	if _, ok := DataDict.Map[previousItems]; !ok {
@@ -57,22 +57,23 @@ func generateMarkovResponse(inputText string) string {
 		if !ok {
 			break
 		}
+
 		nextItem := options[rand.Intn(len(options))]
 		if nextItem == End {
-			if response == originalResponse { // Don't End immediately, try and generate at least one extra word on top of the seed
+			if len(resp) == originalRespLen { // Don't End immediately, try and generate at least one extra word on top of the seed
 				continue
 			}
 			break
 		}
-		if _, isPunctuation := punctuation[nextItem]; isPunctuation {
-			response = response + nextItem
+		if _, ok := punctuation[nextItem]; ok {
+			resp[len(resp)-1] = resp[len(resp)-1] + nextItem
 		} else {
-			response = response + " " + nextItem
+			resp = append(resp, nextItem)
 		}
 		previousItems[0] = previousItems[1]
 		previousItems[1] = nextItem
 	}
-	return response
+	return strings.Join(resp, " ")
 }
 
 func trainMessage(msg string) {
