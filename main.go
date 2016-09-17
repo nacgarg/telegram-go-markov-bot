@@ -120,26 +120,3 @@ func runBot(token string, mode bool) error {
 	}
 	return nil
 }
-
-func handleCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
-	if update.Message.Command() == "test" {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "yo")
-		msg.ReplyToMessageID = update.Message.MessageID
-		_, sendErr := bot.Send(msg)
-		if sendErr != nil {
-			log.Println(sendErr)
-		}
-		return
-	}
-
-	if update.Message.Command() == "markov" {
-		log.Println(update.Message.CommandArguments())
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, generateMarkovResponse(update.Message.CommandArguments()))
-		msg.ReplyToMessageID = update.Message.MessageID
-		_, sendErr := bot.Send(msg)
-		if sendErr != nil {
-			log.Println(sendErr)
-		}
-		return
-	}
-}
