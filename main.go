@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"syscall"
+	"io/ioutil"
 )
 
 type DataMapType map[[2]string][]string
@@ -54,7 +55,11 @@ func main() {
 	DataDict.Map = ds
 
 	if importPath != "" {
-		importFile(importPath)
+		fileBytes, err := ioutil.ReadFile(importPath)
+		if err != nil {
+			log.Panic(err)
+		}
+		ImportFile(fileBytes)
 	}
 
 

@@ -25,8 +25,9 @@ var (
 		";": true,
 		":": true,
 		"&": true,
+		"\n": true,
 	}
-	SplitRegex    = regexp.MustCompile(`([\w'-]+|[.,!?;&])`)
+	SplitRegex    = regexp.MustCompile(`([\w'"-]+|[.,\n!?;&])`)
 	MaxMessageLen int
 )
 
@@ -128,22 +129,14 @@ func saveDataset(path string) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0644)
 }
 
-func importFile(path string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return err
-	}
-
-	fileBytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
+func ImportFile(fileBytes []byte) {
 	msgSplt := bytes.Split(fileBytes, []byte("\n"))
 
 	for _, msg := range msgSplt {
-		trainMessage(string(msg))
+		msgStr := string(msg)
+		msgStr = strings.Replace(msgStr, `\n`, "\n", -1)
+		trainMessage(msgStr)
 	}
-	return nil
 }
 
 func preprocessText(text string) string {
